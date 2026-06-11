@@ -1,0 +1,42 @@
+{
+  "name": "opencode-insight",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tui": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "img",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.0.0",
+    "@opencode-ai/sdk": "^1.0.0",
+    "@opentui/core": ">=0.2.16",
+    "@opentui/solid": ">=0.2.16",
+    "solid-js": "^1.9.12",
+    "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/sqlite3": "^3.1.11",
+    "bun-types": "latest",
+    "esbuild-plugin-solid": "^0.6.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.0.0"
+  }
+}
