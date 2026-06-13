@@ -1,11 +1,10 @@
 import { BoxRenderable, TextAttributes, TextRenderable } from "@opentui/core";
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui";
 
-import { getAccumulatedTokenUsage, type AccumulatedTokens } from "../../lib/tokenStore";
+import { getAccumulatedTokenUsage, type AccumulatedTokens } from "../../lib/apiDataSource";
 import { TimelinePanel } from "./panels/TimelinePanel";
 import { OverviewPanel } from "./panels/OverviewPanel";
 import { SidebarPanel } from "./panels/SidebarPanel";
-import { defaultTheme } from "../../theme";
 
 import type { SidebarCategory, View } from "./types";
 
@@ -57,11 +56,12 @@ export class OverlayController {
     this.currentTheme = props.api.theme.current;
     this.accent = this.currentTheme.accent;
 
-    this.timelinePanel = new TimelinePanel(this.renderer, this.accent, this.currentTheme.textMuted);
-    this.overviewPanel = new OverviewPanel(this.renderer);
+    this.timelinePanel = new TimelinePanel(this.renderer, props.api);
+    this.overviewPanel = new OverviewPanel(this.renderer, props.api, props.sessionId);
 
     this.buildOverlay();
     new SidebarPanel({
+      api: this.props.api,
       renderer: this.renderer,
       sidebarContainer: this.sidebar,
       sidebarCategories: this.sidebarCategories,
@@ -79,7 +79,7 @@ export class OverlayController {
       const timelineChanged = await this.timelinePanel.loadData(this.props.sessionId);
       if (timelineChanged) changed = true;
 
-      this.accumulatedTokens = await getAccumulatedTokenUsage();
+      this.accumulatedTokens = await getAccumulatedTokenUsage(this.props.api);
 
       if (this.fetchError) {
         this.fetchError = null;
@@ -107,6 +107,7 @@ export class OverlayController {
       }
       this.updateData = setTimeout(poll, 2000);
     };
+    this.renderViewPanel();
     poll();
   }
 
@@ -125,9 +126,9 @@ export class OverlayController {
       left: 0,
       width: this.renderer.terminalWidth,
       height: this.renderer.terminalHeight,
-      backgroundColor: "black",
+      backgroundColor: this.currentTheme.background,
       border: true,
-      borderColor: "red",
+      borderColor: this.currentTheme.border,
       flexDirection: "row",
       focusable: true,
     });
@@ -135,17 +136,22 @@ export class OverlayController {
       width: Math.floor(this.renderer.terminalWidth * 0.2),
       flexDirection: "column",
       border: true,
-      borderColor: "gray",
+      borderColor: this.currentTheme.borderSubtle,
     });
     this.viewPanel = new BoxRenderable(this.renderer, {
       width: Math.floor(this.renderer.terminalWidth * 0.8),
       flexDirection: "column",
       border: true,
     });
-    const closeBtn = new TextRenderable(this.renderer, {
+    const closeBtn: TextRenderable = new TextRenderable(this.renderer, {
       content: "[X] Close",
-      fg: "red",
-      onMouseDown: () => this.props.close(),
+      fg: this.currentTheme.error,
+      bg: this.currentTheme.background,
+      marginTop: -1,
+      zIndex: 10,
+      onMouseUp: () => this.props.close(),
+      onMouseOver: () => (closeBtn.bg = this.currentTheme.backgroundElement),
+      onMouseOut: () => (closeBtn.bg = this.currentTheme.background),
     });
 
     this.overlay.add(this.sidebar);
@@ -170,6 +176,7 @@ export class OverlayController {
     this.contentArea = new BoxRenderable(this.renderer, {
       flexDirection: "column",
       height: "90%",
+      marginRight: 1,
     });
     this.viewPanel.add(this.contentArea);
 
@@ -203,7 +210,7 @@ export class OverlayController {
   // ── Shared render helpers ─────────────────────────────────
 
   private renderErrorState() {
-    const { error, errorBg, textMuted, accent } = defaultTheme;
+    const { error, backgroundPanel, textMuted, accent } = this.currentTheme;
 
     const errorContainer = new BoxRenderable(this.renderer, {
       width: "100%",
@@ -223,7 +230,7 @@ export class OverlayController {
       paddingBottom: 2,
       paddingLeft: 4,
       paddingRight: 4,
-      backgroundColor: errorBg,
+      backgroundColor: backgroundPanel,
     });
 
     errorBox.add(

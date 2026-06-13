@@ -1,48 +1,105 @@
-import { BoxRenderable, TextRenderable, TextAttributes } from "@opentui/core";
+import { BoxRenderable, TextRenderable, TextAttributes, CliRenderer, RGBA } from "@opentui/core";
 import { SidebarCategory } from "../types";
+import * as tui from "@opencode-ai/plugin/tui";
 
 export interface SidebarPanelProps {
-  renderer: any;
+  api: tui.TuiPluginApi;
+  renderer: CliRenderer;
   sidebarContainer: BoxRenderable;
   sidebarCategories: SidebarCategory[];
   selectCategoryCallback: (cat: SidebarCategory) => Promise<void>;
 }
 
 export class SidebarPanel {
+  private readonly defaultSelectedCategoryIndex = 0;
   private readonly selectedSidebarAttribute: number = TextAttributes.BOLD | TextAttributes.ITALIC;
   private readonly blankSidebarAttribute: number = TextAttributes.NONE;
   private readonly hoveredSidebvarAttribute: number = TextAttributes.UNDERLINE;
+  private selectedSidebarBackground!: RGBA;
+  private hoveredSidebarBackground!: RGBA;
+  private blankSidebarBackground!: RGBA;
 
   private sidebarItems: TextRenderable[] = [];
   private currentCategory!: SidebarCategory;
+  private categoryBoxes: BoxRenderable[] = [];
+
+  private theme!: tui.TuiThemeCurrent;
 
   constructor(private props: SidebarPanelProps) {
+    this.theme = props.api.theme.current;
+    this.selectedSidebarBackground = this.theme.borderActive;
+    this.hoveredSidebarBackground = this.theme.backgroundElement;
+    this.blankSidebarBackground = this.theme.background;
+    const titleBox = new BoxRenderable(props.renderer, {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 1,
+      marginBottom: 1,
+      marginLeft: 1,
+      marginRight: 1,
+    });
+    titleBox.add(
+      new TextRenderable(props.renderer, {
+        content: "Opencode Insight",
+        fg: this.theme.accent,
+        marginTop: 1,
+        marginBottom: 1,
+        marginLeft: 1,
+        marginRight: 1,
+        attributes: TextAttributes.BOLD,
+      }),
+    );
+    props.sidebarContainer.add(titleBox);
+
+    const separator = new BoxRenderable(props.renderer, {
+      border: ["bottom"],
+      marginLeft: 1,
+      marginRight: 1,
+      marginBottom: 1,
+    });
+    props.sidebarContainer.add(separator);
+
     this.sidebarItems = this.props.sidebarCategories.map((cat: SidebarCategory) => {
+      const box = new BoxRenderable(props.renderer, {
+        flexDirection: "row",
+        alignItems: "center",
+        height: 5,
+        marginLeft: 1,
+        marginRight: 1,
+        paddingLeft: 1,
+        paddingRight: 1,
+        backgroundColor: this.theme.background,
+      });
+
       const item = new TextRenderable(props.renderer, {
         content: cat,
-        marginTop: 1,
-        marginLeft: 2,
+        marginLeft: 1,
+        marginRight: 1,
         onMouseUp: async () => {
           await this.onSelect(cat);
         },
-
-        // hover and unhover
         onMouseOver: async () => {
+          box.backgroundColor = this.hoveredSidebarBackground;
           item.attributes = this.hoveredSidebvarAttribute;
         },
         onMouseOut: async () => {
-          if (this.currentCategory === cat) {
+          if (cat === this.currentCategory) {
+            box.backgroundColor = this.selectedSidebarBackground;
             item.attributes = this.selectedSidebarAttribute;
           } else {
+            box.backgroundColor = this.blankSidebarBackground;
             item.attributes = this.blankSidebarAttribute;
           }
         },
       });
       item.focusable = true;
-      this.props.sidebarContainer.add(item);
+      box.add(item);
+      this.props.sidebarContainer.add(box);
+      this.categoryBoxes.push(box);
       return item;
     });
-    this.onSelect(this.props.sidebarCategories[0]);
+    this.onSelect(this.props.sidebarCategories[this.defaultSelectedCategoryIndex]);
   }
 
   public async onSelect(cat: SidebarCategory): Promise<void> {
@@ -50,12 +107,18 @@ export class SidebarPanel {
 
     for (let idx = 0; idx < this.sidebarItems.length; idx++) {
       const item = this.sidebarItems[idx];
+      const box = this.categoryBoxes[idx];
+      const isSelected = cat === this.props.sidebarCategories[idx];
 
-      if (cat === this.props.sidebarCategories[idx]) {
+      if (isSelected) {
         item.attributes = this.selectedSidebarAttribute;
+        item.fg = this.theme.accent;
+        box.backgroundColor = this.selectedSidebarBackground;
         await this.props.selectCategoryCallback(cat);
       } else {
         item.attributes = this.blankSidebarAttribute;
+        item.fg = this.theme.text;
+        box.backgroundColor = this.blankSidebarBackground;
       }
     }
   }

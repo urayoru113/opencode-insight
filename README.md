@@ -39,6 +39,10 @@ The plugin adds a sidebar panel to your OpenCode TUI. Click the monitor icon to 
 
 ![Detail View](img/DetailPanel.png)
 
+## Data Reference
+
+See [`docs/DATA-SOURCES.md`](docs/DATA-SOURCES.md) for a complete catalog of all metrics, token fields, message parts, session data, and real-time events available to the plugin.
+
 ## Requirements
 
 - OpenCode >= 1.0.0

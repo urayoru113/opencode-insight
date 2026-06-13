@@ -1,10 +1,11 @@
 import { BoxRenderable, TextRenderable, TextAttributes, Box, Text, ScrollBoxRenderable } from "@opentui/core";
-import type { CliRenderer, RGBA } from "@opentui/core";
-import { getTimelineData, getMessageParts, type TimelineEntry } from "../../../lib/tokenStore";
+import type { CliRenderer } from "@opentui/core";
+import type { TuiPluginApi } from "@opencode-ai/plugin/tui";
+import { getTimelineData, getMessageParts, type TimelineEntry } from "../../../lib/apiDataSource";
 
 export type View = "list" | "detail";
 
-const BATCH_SIZE = 40;
+const BATCH_SIZE = 20;
 
 export class TimelinePanel {
   private data: TimelineEntry[] = [];
@@ -27,13 +28,12 @@ export class TimelinePanel {
 
   constructor(
     private renderer: CliRenderer,
-    private accent: RGBA,
-    private textMuted: RGBA,
+    private api: TuiPluginApi,
   ) {}
 
-  /** Load data from DB. Returns true if count changed (needs re-render). */
+  /** Load data from API. Returns true if count changed (needs re-render). */
   async loadData(sessionId: string): Promise<boolean> {
-    const newData = await getTimelineData(sessionId);
+    const newData = await getTimelineData(this.api, sessionId);
     const changed = newData.length !== this.prevCount;
     this.data = newData;
     this.prevCount = newData.length;
@@ -96,57 +96,109 @@ export class TimelinePanel {
       totalOutput + totalCacheWrite > 0 ? ((totalCacheWrite / (totalOutput + totalCacheWrite)) * 100).toFixed(1) : "0";
 
     // Summary line
-    const summary = new TextRenderable(this.renderer, {
-      content: [
-        `Messages: ${messageCount}`,
-        `Tools: ${toolCount}`,
-        `In: ${this.fmtNum(totalInput)}`,
-        `Out: ${this.fmtNum(totalOutput)}`,
-        `CacheIn: ${this.fmtNum(totalCacheRead)} (${cacheInputRate}%)`,
-        `CacheOut: ${this.fmtNum(totalCacheWrite)} (${cacheOutputRate}%)`,
-        `Cost: $${this.fmtNum(totalCost)}`,
-      ].join(" | "),
-      marginTop: 2,
-      marginLeft: 3,
-      fg: this.textMuted,
+    const summaryBox = new BoxRenderable(this.renderer, {
+      flexDirection: "column",
+      marginTop: 1,
+      marginLeft: 2,
+      marginRight: 1,
+      paddingLeft: 2,
+      height: 4,
+      borderStyle: "double",
     });
-    container.add(summary);
+
+    const row1 = new BoxRenderable(this.renderer, { flexDirection: "row" });
+    const row2 = new BoxRenderable(this.renderer, { flexDirection: "row" });
+
+    const summaryItems = [
+      ["Total", data.length],
+      ["Messages", messageCount],
+      ["Tools", toolCount],
+      ["In", this.fmtNum(totalInput)],
+      ["Out", this.fmtNum(totalOutput)],
+      ["CacheIn", `${this.fmtNum(totalCacheRead)} (${cacheInputRate}%)`],
+      ["CacheOut", `${this.fmtNum(totalCacheWrite)} (${cacheOutputRate}%)`],
+      ["Cost", `$${this.fmtNum(totalCost)}`],
+    ];
+
+    summaryItems.forEach(([label, value], idx) => {
+      const targetRow = idx < 4 ? row1 : row2;
+
+      targetRow.add(
+        new TextRenderable(this.renderer, {
+          content: `${label}: `,
+        }),
+      );
+      targetRow.add(
+        new TextRenderable(this.renderer, {
+          content: `${value}`,
+          fg: this.api.theme.current.syntaxNumber,
+        }),
+      );
+
+      if (idx < summaryItems.length - 1 && idx !== 3) {
+        targetRow.add(new TextRenderable(this.renderer, { content: " | " }));
+      }
+    });
+
+    summaryBox.add(row1);
+    summaryBox.add(row2);
+    container.add(summaryBox);
 
     // Header row
-    const headerRow = new BoxRenderable(this.renderer, {
-      flexDirection: "row",
+    const headerBar = new BoxRenderable(this.renderer, {
       height: 3,
       marginTop: 2,
-      marginBottom: -1,
       marginLeft: 3,
-      marginRight: 4,
+      paddingRight: 2,
+      marginRight: 2,
+      border: ["top", "left", "right"],
+      borderStyle: "rounded",
+      zIndex: 1,
+      flexDirection: "row",
     });
     const headers = ["#", "Time", "Type", "Agent/Tool", "Input", "Cache In", "Output", "Cost"];
-    const colWidths: `${number}%`[] = ["5%", "16%", "7%", "22%", "11%", "11%", "11%", "17%"];
+    const colWidths: `${number}%`[] = ["5%", "17%", "5%", "23%", "13%", "13%", "13%", "11%"];
     headers.forEach((h, i) => {
-      headerRow.add(
+      headerBar.add(
         Box(
           {
-            flexGrow: 1,
             width: colWidths[i],
             height: 3,
-            border: true,
-            customBorderChars: this.borderChars,
+            border: i == 0 ? ["right"] : ["left"],
             marginRight: -1,
             alignItems: "center",
+            zIndex: 2,
+            flexGrow: 1,
+            customBorderChars: {
+              topLeft: i === 0 ? "╭" : "┬",
+              topRight: "╮",
+              bottomLeft: "│",
+              bottomRight: "│",
+              leftT: "e",
+              rightT: "f",
+              topT: "g",
+              bottomT: "h",
+              horizontal: "─",
+              vertical: "│",
+              cross: "k",
+            },
           },
-          Text({ content: h, fg: this.accent }),
+          Text({ content: h, fg: this.api.theme.current.accent, paddingTop: 1 }),
         ),
       );
     });
-    container.add(headerRow);
+    container.add(headerBar);
 
     // Data rows
     const rowsContainer = new ScrollBoxRenderable(this.renderer, {
       flexDirection: "row",
       viewportCulling: true,
+      border: ["left", "right", "bottom"],
+      borderStyle: "rounded",
       marginLeft: 3,
-      paddingBottom: 1,
+      marginRight: 2,
+      zIndex: 2,
+      paddingBottom: -1,
       scrollbarOptions: {
         width: 1,
       },
@@ -165,7 +217,7 @@ export class TimelinePanel {
           flexDirection: "row",
           height: 3,
           marginBottom: -1,
-          marginRight: data.length > 18 ? 3 : 4,
+          marginRight: data.length > 16 ? 1 : 2,
         });
 
         const typeIcon = item.type === "message" ? "📃" : "🔧";
@@ -191,30 +243,31 @@ export class TimelinePanel {
               {
                 flexGrow: 1,
                 width: colWidths[i],
-                border: true,
-                customBorderChars: this.borderChars,
+                border: i == 0 ? ["right"] : ["left"],
                 marginRight: -1,
                 alignItems: "center",
               },
-              Text({ truncate: true, content: val }),
+              Text({ truncate: true, content: val, paddingTop: 1 }),
             ),
           );
         });
 
         row.onMouseOver = async () => {
-          row.backgroundColor = "#24283b";
+          row.backgroundColor = "#285f9f";
         };
         row.onMouseOut = async () => {
-          row.backgroundColor = "#000000";
+          row.backgroundColor =
+            idx % 2 == 0 ? this.api.theme.current.backgroundElement : this.api.theme.current.background;
         };
         row.onMouseDown = async () => {
           this.selectedIndex = idx;
           await onEnterDetail(idx);
         };
 
+        row.backgroundColor =
+          idx % 2 == 0 ? this.api.theme.current.backgroundElement : this.api.theme.current.background;
         rowsContainer.add(row);
       }
-
       if (batchEnd < data.length) {
         await new Promise<void>((resolve) => setTimeout(resolve, 0));
         if (isValid && !isValid()) return;
@@ -225,7 +278,7 @@ export class TimelinePanel {
   private async renderDetail(container: BoxRenderable, back: () => Promise<void>): Promise<void> {
     const backBtn = new TextRenderable(this.renderer, {
       content: "← Back to Timeline",
-      fg: this.accent,
+      fg: this.api.theme.current.accent,
     });
     backBtn.focusable = true;
     backBtn.onMouseDown = async () => {
@@ -257,7 +310,7 @@ export class TimelinePanel {
     container.add(
       new TextRenderable(this.renderer, {
         content: `💬 Message | Agent: ${item.agent || "Unknown"} | Model: ${item.provider}/${item.model} | Role: ${item.role}`,
-        fg: this.textMuted,
+        fg: this.api.theme.current.textMuted,
         marginTop: 1,
         marginLeft: 1,
       }),
@@ -276,7 +329,7 @@ export class TimelinePanel {
     container.add(
       new TextRenderable(this.renderer, {
         content: `Input: ${this.fmtNum(item.inputTokens || 0)} | Output: ${this.fmtNum(item.outputTokens || 0)} | Reasoning: ${this.fmtNum(item.reasoningTokens || 0)}`,
-        fg: this.textMuted,
+        fg: this.api.theme.current.textMuted,
         marginTop: 1,
         marginLeft: 1,
       }),
@@ -285,7 +338,7 @@ export class TimelinePanel {
     container.add(
       new TextRenderable(this.renderer, {
         content: `Cache In: ${this.fmtNum(item.cacheRead || 0)} (${cacheInputRate}%) | Cache Out: ${this.fmtNum(item.cacheWrite || 0)} (${cacheOutputRate}%)`,
-        fg: this.textMuted,
+        fg: this.api.theme.current.textMuted,
         marginTop: 1,
         marginLeft: 1,
       }),
@@ -294,7 +347,7 @@ export class TimelinePanel {
     container.add(
       new TextRenderable(this.renderer, {
         content: `Total: ${this.fmtNum(item.totalTokens || 0)} | Cost: $${this.fmtNum(item.cost || 0)}`,
-        fg: this.textMuted,
+        fg: this.api.theme.current.textMuted,
         marginTop: 1,
         marginLeft: 1,
       }),
@@ -304,7 +357,7 @@ export class TimelinePanel {
     container.add(
       new TextRenderable(this.renderer, {
         content: `Time: ${new Date(item.timestamp).toLocaleString()}`,
-        fg: this.textMuted,
+        fg: this.api.theme.current.textMuted,
         marginTop: 1,
         marginLeft: 1,
         marginBottom: 1,
@@ -313,7 +366,7 @@ export class TimelinePanel {
 
     // Fetch and display message content
     try {
-      const parts = await getMessageParts(item.id);
+      const parts = await getMessageParts(this.api, item.id);
       if (parts.length > 0) {
         const mergedContent = parts
           .map((part) => {
@@ -336,7 +389,7 @@ export class TimelinePanel {
         container.add(
           new TextRenderable(this.renderer, {
             content: "(No content available)",
-            fg: this.textMuted,
+            fg: this.api.theme.current.textMuted,
             marginTop: 1,
             marginLeft: 1,
           }),
@@ -356,12 +409,13 @@ export class TimelinePanel {
 
   private async renderToolDetail(container: BoxRenderable, item: TimelineEntry): Promise<void> {
     // Tool info
-    const statusColor = item.status === "completed" ? "#9ece6a" : item.status === "error" ? "#f7768e" : this.accent;
+    const statusColor =
+      item.status === "completed" ? "#9ece6a" : item.status === "error" ? "#f7768e" : this.api.theme.current.accent;
 
     container.add(
       new TextRenderable(this.renderer, {
         content: `🔧 ${item.toolName}`,
-        fg: this.accent,
+        fg: this.api.theme.current.accent,
         marginTop: 1,
         marginLeft: 1,
         attributes: TextAttributes.BOLD,
@@ -380,7 +434,7 @@ export class TimelinePanel {
     container.add(
       new TextRenderable(this.renderer, {
         content: `Time: ${new Date(item.timestamp).toLocaleString()}`,
-        fg: this.textMuted,
+        fg: this.api.theme.current.textMuted,
         marginTop: 1,
         marginLeft: 1,
       }),
@@ -391,7 +445,7 @@ export class TimelinePanel {
       container.add(
         new TextRenderable(this.renderer, {
           content: "📥 Input:",
-          fg: this.accent,
+          fg: this.api.theme.current.accent,
           marginTop: 2,
           marginLeft: 1,
           attributes: TextAttributes.BOLD,
@@ -412,7 +466,7 @@ export class TimelinePanel {
       container.add(
         new TextRenderable(this.renderer, {
           content: "📤 Output:",
-          fg: this.accent,
+          fg: this.api.theme.current.accent,
           marginTop: 2,
           marginLeft: 1,
           attributes: TextAttributes.BOLD,
