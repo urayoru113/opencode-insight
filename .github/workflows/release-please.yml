@@ -48,8 +48,9 @@ jobs:
       - name: Rewrite README image paths
         run: bun scripts/prepublish-readme.mjs ${{ steps.get-tag.outputs.tag }}
 
-      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-
-      - run: bun publish
+      - name: Publish to npm
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          bun publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
