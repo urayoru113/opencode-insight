@@ -4,11 +4,10 @@ A monitoring plugin for [OpenCode](https://github.com/anomalyco/opencode) that p
 
 ## Features
 
-- **Overview Dashboard** — Total tokens, costs, and cache rates at a glance
-- **Timeline View** — Chronological view of all messages and tool calls with full content
-- **Real-time Data** — Live data from your local OpenCode database
-- **Token Breakdown** — Detailed metrics: input, output, reasoning, cache in/out with rates
-- **Cost Tracking** — Per-message and accumulated cost analysis
+- **Overview Dashboard** — 6 metric cards + token distribution + model usage + cache efficiency
+- **Timeline View** — Scrollable list of messages and tool calls with inline detail expansion
+- **Real-time Updates** — Auto-refreshes every 2 seconds via the official OpenCode API
+- **Theme Aware** — Integrates with OpenCode's current theme
 
 ## Installation
 
@@ -20,29 +19,30 @@ A monitoring plugin for [OpenCode](https://github.com/anomalyco/opencode) that p
 
 ## Usage
 
-The plugin adds a sidebar panel to your OpenCode TUI. Click the monitor icon to open the overlay.
+Click **"🤖 Opencode Insight"** in the sidebar to open the fullscreen overlay.
 
-### Views
+### Overview Panel
 
-- **Overview** — Summary cards with total tokens and timeline entries
-- **Timeline** — Scrollable list of all messages and tool calls
-  - Click any row to see full details including message content
-  - Shows: Input tokens, Cache In, Output tokens, Cost
+| Card | Shows |
+|------|-------|
+| **Total Tokens** | All tokens consumed |
+| **Cost** | Total USD |
+| **Input** | Input tokens + cached |
+| **Output** | Output tokens + cached |
+| **Cache** | Cache read + write |
+| **Tool Calls** | Total tool call count |
 
-### Screenshots
+### Timeline Panel
 
-**Timeline List View**
+Scrollable table of every message and tool call. Click any row to expand inline details — message content, reasoning, token breakdown, or tool I/O.
 
-![Timeline View](img/ViewPanel.png)
+## Screenshots
 
-**Message Detail View**
-
-![Detail View](img/DetailPanel.png)
+![Overview Panel](img/Overview.png)
 
 ## Requirements
 
-- OpenCode >= 1.0.0
-- Node.js >= 18
+- OpenCode >= 1.17.3
 
 ## License
 

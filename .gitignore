@@ -1,6 +1,9 @@
 node_modules/
 dist/
+docs/
 *.log
 .DS_Store
 .env
 *.bak
+
+token-optimizer
