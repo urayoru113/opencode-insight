@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/urayoru113/opencode-insight/compare/v0.1.6...v0.1.7) (2026-06-17)
+
+
+### Bug Fixes
+
+* use npm trusted publishing via OIDC ([5cc2e7e](https://github.com/urayoru113/opencode-insight/commit/5cc2e7ed5d212ff66127848176a8b385a8aced82))
+
 ## [0.1.6](https://github.com/urayoru113/opencode-insight/compare/v0.1.5...v0.1.6) (2026-06-17)
 
 
