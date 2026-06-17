@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/urayoru113/opencode-insight.git#0.1.3"
+    "url": "git+https://github.com/urayoru113/opencode-insight.git"
   },
   "files": [
     "dist",
@@ -26,8 +26,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "typecheck": "tsc --noEmit",
-    "version": "node scripts/sync-version.mjs && git add package.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@opencode-ai/plugin": "^1.0.0",
