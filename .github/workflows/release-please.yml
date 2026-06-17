@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,9 +49,10 @@ jobs:
       - name: Rewrite README image paths
         run: bun scripts/prepublish-readme.mjs ${{ steps.get-tag.outputs.tag }}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Publish to npm
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-          npm publish --access public
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
