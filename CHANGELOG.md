@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/urayoru113/opencode-insight/compare/v0.1.5...v0.1.6) (2026-06-17)
+
+
+### Bug Fixes
+
+* use npm publish instead of bun publish ([4d1596d](https://github.com/urayoru113/opencode-insight/commit/4d1596d9cf9e59fb31423e6a14905837ec9ba2fd))
+
 ## [0.1.5](https://github.com/urayoru113/opencode-insight/compare/v0.1.4...v0.1.5) (2026-06-17)
 
 
