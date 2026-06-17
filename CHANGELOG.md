@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/urayoru113/opencode-insight/compare/v0.1.4...v0.1.5) (2026-06-17)
+
+
+### Bug Fixes
+
+* write npmrc in project root for bun publish auth ([6c73e39](https://github.com/urayoru113/opencode-insight/commit/6c73e395ff070a56e8a7aba9baee30a6328d7114))
+
 ## [0.1.4](https://github.com/urayoru113/opencode-insight/compare/v0.1.3...v0.1.4) (2026-06-17)
 
 
