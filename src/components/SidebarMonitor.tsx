@@ -9,12 +9,18 @@ interface SidebarMonitorProps {
 
 export default function SidebarMonitor(props: SidebarMonitorProps) {
   const [showOverlay, setShowOverlay] = createSignal(false);
+  const [isHovered, setIsHovered] = createSignal(false);
+  const t = () => props.api.theme.current;
 
   return (
     <box style={{ flexDirection: "column", padding: 0 }}>
-      <text>🤖 Monitor</text>
-      <box onMouseUp={() => setShowOverlay(true)}>
-        <text style={{ fg: props.api.theme.current.accent }}>[View Details]</text>
+      <box
+        style={{ flexDirection: "row", alignItems: "center", paddingTop: 1, paddingBottom: 1 }}
+        onMouseOver={() => setIsHovered(true)}
+        onMouseOut={() => setIsHovered(false)}
+        onMouseUp={() => setShowOverlay(true)}
+      >
+        <text style={{ fg: isHovered() ? t().warning : t().text }}>🤖 Opencode Insight</text>
       </box>
 
       <Show when={showOverlay()}>

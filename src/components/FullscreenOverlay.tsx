@@ -8,13 +8,11 @@ interface FullscreenOverlayProps {
   close: () => void;
 }
 
-let controller: OverlayController | null = null;
-
 export default function FullscreenOverlay(props: FullscreenOverlayProps) {
   onMount(() => {
-    controller = controller === null ? new OverlayController({ api: props.api, sessionId: props.sessionId, close: props.close }) : controller;
+    const controller = new OverlayController({ api: props.api, sessionId: props.sessionId, close: props.close });
     controller.mount();
-    onCleanup(() => (controller as OverlayController).cleanup());
+    onCleanup(() => controller.cleanup());
   });
 
   return null;
