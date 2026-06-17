@@ -8,7 +8,7 @@ export type View = "list" | "detail";
 
 const BATCH_SIZE = 20;
 const HEADERS = ["#", "Time", "Type", "Agent/Tool", "Input", "Cache In", "Output", "Cost"];
-const COL_WIDTHS: `${number}%`[] = ["5%", "17%", "5%", "23%", "13%", "13%", "13%", "11%"];
+const COL_WIDTHS: `${number}%`[] = ["5%", "20%", "5%", "25%", "13%", "13%", "13%", "6%"];
 
 export class TimelinePanel {
   private data: TimelineEntry[] = [];
@@ -87,13 +87,9 @@ export class TimelinePanel {
     const totalCost = data.reduce((sum, x) => sum + (x.cost || 0), 0);
 
     const cacheInputRate =
-      totalInput + totalCacheRead > 0
-        ? ((totalCacheRead / (totalInput + totalCacheRead)) * 100).toFixed(1)
-        : "0";
+      totalInput + totalCacheRead > 0 ? ((totalCacheRead / (totalInput + totalCacheRead)) * 100).toFixed(1) : "0";
     const cacheOutputRate =
-      totalOutput + totalCacheWrite > 0
-        ? ((totalCacheWrite / (totalOutput + totalCacheWrite)) * 100).toFixed(1)
-        : "0";
+      totalOutput + totalCacheWrite > 0 ? ((totalCacheWrite / (totalOutput + totalCacheWrite)) * 100).toFixed(1) : "0";
 
     const summaryBox = new BoxRenderable(this.renderer, {
       flexDirection: "column",
@@ -241,11 +237,7 @@ export class TimelinePanel {
     }, 0);
   }
 
-  private buildRow(
-    item: TimelineEntry,
-    idx: number,
-    onEnterDetail: (idx: number) => Promise<void>,
-  ): BoxRenderable {
+  private buildRow(item: TimelineEntry, idx: number, onEnterDetail: (idx: number) => Promise<void>): BoxRenderable {
     const t = this.api.theme.current;
     const typeIcon = item.type === "message" ? "📃" : "🔧";
     const agentOrTool = item.type === "message" ? item.agent || "Unknown" : item.toolName || "Unknown";
@@ -279,7 +271,8 @@ export class TimelinePanel {
         border: i === 0 ? ["right"] : ["left"],
         marginRight: -1,
         alignItems: "center",
-        paddingRight: 2,
+        paddingRight: 1,
+        paddingLeft: 1,
       });
 
       cell.add(
