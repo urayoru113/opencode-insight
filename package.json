@@ -26,7 +26,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "version": "node scripts/sync-version.mjs && git add package.json"
   },
   "dependencies": {
     "@opencode-ai/plugin": "^1.0.0",
