@@ -1,7 +1,6 @@
 import { BoxRenderable, Renderable, TextAttributes, TextRenderable } from "@opentui/core";
 import type { TuiPluginApi } from "@opencode-ai/plugin/tui";
 
-import { getAccumulatedTokenUsage, type AccumulatedTokens } from "../../lib/apiDataSource";
 import { TimelinePanel } from "./panels/TimelinePanel";
 import { OverviewPanel } from "./panels/OverviewPanel";
 import { SidebarPanel } from "./panels/SidebarPanel";
@@ -40,15 +39,6 @@ export class OverlayController {
   // Live data cache
   private timelinePanel: TimelinePanel;
   private overviewPanel: OverviewPanel;
-  private accumulatedTokens: AccumulatedTokens = {
-    input: 0,
-    output: 0,
-    reasoning: 0,
-    cacheRead: 0,
-    cacheWrite: 0,
-    total: 0,
-    cost: 0,
-  };
 
   constructor(private props: OverlayControllerProps) {
     this.renderer = props.api.renderer;
@@ -80,8 +70,6 @@ export class OverlayController {
     try {
       const timelineChanged = this.timelinePanel.loadData(this.props.sessionId);
       if (timelineChanged) changed = true;
-
-      this.accumulatedTokens = await getAccumulatedTokenUsage(this.props.api);
 
       if (this.fetchError) {
         this.fetchError = null;
@@ -208,7 +196,7 @@ export class OverlayController {
 
     switch (this.currentSidebarCategory) {
       case "Overview":
-        this.overviewPanel.render(this.contentArea, this.accumulatedTokens);
+        this.overviewPanel.render(this.contentArea);
         break;
       case "Timeline":
         await this.timelinePanel.render(

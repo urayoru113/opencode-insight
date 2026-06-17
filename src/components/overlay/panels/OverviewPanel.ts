@@ -32,11 +32,11 @@ export class OverviewPanel {
     private sessionId: string,
   ) {}
 
-  render(contentArea: BoxRenderable, accumulatedTokens: AccumulatedTokens): void {
-    const acc = accumulatedTokens;
+  render(contentArea: BoxRenderable): void {
+    const tokenUsage = getTokenUsage(this.api, this.sessionId);
+    const acc = this.sumTokenUsage(tokenUsage);
     const hasRealData = acc.total > 0;
 
-    const tokenUsage = getTokenUsage(this.api, this.sessionId);
     const modelEntries = this.buildModelMap(tokenUsage);
     const toolCount = getToolCallCount(this.api, this.sessionId);
     const toolStats = getToolUsageStats(this.api, this.sessionId);
@@ -98,6 +98,29 @@ export class OverviewPanel {
     }
   }
 
+  private sumTokenUsage(tokenUsage: RealTokenUsageEntry[]): AccumulatedTokens {
+    return tokenUsage.reduce(
+      (sum, e) => ({
+        input: sum.input + e.inputTokens,
+        output: sum.output + e.outputTokens,
+        reasoning: sum.reasoning + e.reasoningTokens,
+        cacheRead: sum.cacheRead + e.cacheRead,
+        cacheWrite: sum.cacheWrite + e.cacheWrite,
+        total: sum.total + e.totalTokens,
+        cost: sum.cost + e.cost,
+      }),
+      {
+        input: 0,
+        output: 0,
+        reasoning: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+        total: 0,
+        cost: 0,
+      } as AccumulatedTokens,
+    );
+  }
+
   private buildCards(
     acc: AccumulatedTokens,
     hasRealData: boolean,
@@ -111,7 +134,7 @@ export class OverviewPanel {
         icon: "🪙",
         title: "Total Tokens",
         value: hasRealData ? fmtNum(acc.total) : "0",
-        subtitle: hasRealData ? `${fmtNum(acc.input)} / ${fmtNum(acc.output)}` : "0 / 0",
+        subtitle: hasRealData ? `in: ${fmtNum(acc.input)} / out: ${fmtNum(acc.output)}` : "in: 0 / out: 0",
         color: this.api.theme.current.accent,
       },
       {
