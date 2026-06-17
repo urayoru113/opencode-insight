@@ -14,7 +14,6 @@ export default defineConfig({
   clean: true,
   dts: true,
   esbuildPlugins: [
-    // @ts-expect-error - esbuild-plugin-solid types mismatch
     solidPlugin({
       solid: {
         generate: "universal",

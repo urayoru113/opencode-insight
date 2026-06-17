@@ -9,8 +9,6 @@ import {
   getAgentUsageStats,
   type AccumulatedTokens,
   type RealTokenUsageEntry,
-  type AgentUsageStat,
-  type ToolUsageStat,
 } from "../../../lib/apiDataSource";
 import { fmtNum, itemColor, miniBar, truncate } from "../../../lib/uiHelpers";
 

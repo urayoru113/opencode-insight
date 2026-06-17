@@ -1,4 +1,4 @@
-import { BoxRenderable, TextRenderable, TextAttributes, CliRenderer, RGBA } from "@opentui/core";
+import { BoxRenderable, TextRenderable, TextAttributes, CliRenderer } from "@opentui/core";
 import { SidebarCategory } from "../types";
 import * as tui from "@opencode-ai/plugin/tui";
 

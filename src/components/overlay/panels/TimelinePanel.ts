@@ -8,7 +8,7 @@ export type View = "list" | "detail";
 
 const BATCH_SIZE = 20;
 const HEADERS = ["#", "Time", "Type", "Agent/Tool", "Input", "Cache In", "Output", "Cost"];
-const COL_WIDTHS: `${number}%`[] = ["5%", "20%", "5%", "25%", "13%", "13%", "13%", "6%"];
+const COL_WIDTHS: `${number}%`[] = ["5%", "18%", "5%", "25%", "13%", "13%", "13%", "8%"];
 
 export class TimelinePanel {
   private data: TimelineEntry[] = [];
