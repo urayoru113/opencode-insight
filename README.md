@@ -11,6 +11,8 @@ A monitoring plugin for [OpenCode](https://github.com/anomalyco/opencode) that p
 
 ## Installation
 
+Add to your `tui.json`:
+
 ```json
 {
   "plugins": ["opencode-insight"]
@@ -39,6 +41,16 @@ Scrollable table of every message and tool call. Click any row to expand inline 
 ## Screenshots
 
 ![Overview Panel](img/Overview.png)
+
+## Troubleshooting
+
+If the plugin doesn't load or shows stale code after reinstalling:
+
+```bash
+rm ~/.cache/opencode/packages/opencode-insight@latest -rf
+```
+
+Then restart OpenCode.
 
 ## Requirements
 
